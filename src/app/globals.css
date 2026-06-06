@@ -2,25 +2,58 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --surface: #ffffff;
+  --surface-muted: #f7f7fb;
+  --foreground: #292d34;
+  --muted: #5d5d85;
+  --border: #6060a34d;
+  --dark: #202020;
+  --gray: #646464;
+  --shadow-soft: 0 18px 48px rgba(32, 32, 32, 0.1);
+  --shadow-tight: 0 8px 24px rgba(32, 32, 32, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #202020;
+  --surface: #292d34;
+  --surface-muted: #242424;
+  --foreground: #ffffff;
+  --muted: #d4d4e6;
+  --border: #6060a34d;
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.26);
+  --shadow-tight: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), var(--font-inter), sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-inter), var(--font-jakarta), sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+::selection {
+  background: var(--foreground);
+  color: var(--background);
 }
