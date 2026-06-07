@@ -1,18 +1,36 @@
-import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import {
+  ChangeEvent,
+  Children,
+  InputHTMLAttributes,
+  isValidElement,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TextareaPrimitive } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
 };
 
-export function Field({ label, className = "", ...props }: FieldProps) {
+export function Field({ label, className, id, ...props }: FieldProps) {
+  const fieldId = id ?? label.toLowerCase().replace(/\s+/g, "-");
+
   return (
-    <label className="grid gap-2 text-xs font-semibold uppercase tracking-normal text-[var(--muted)]">
+    <Label htmlFor={fieldId}>
       {label}
-      <input
-        className={`min-h-10 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm normal-case text-[var(--foreground)] outline-none transition focus:border-[var(--foreground)] ${className}`}
-        {...props}
-      />
-    </label>
+      <Input id={fieldId} className={cn("normal-case", className)} {...props} />
+    </Label>
   );
 }
 
@@ -20,15 +38,14 @@ type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
 };
 
-export function Textarea({ label, className = "", ...props }: TextareaProps) {
+export function Textarea({ label, className, id, ...props }: TextareaProps) {
+  const fieldId = id ?? label.toLowerCase().replace(/\s+/g, "-");
+
   return (
-    <label className="grid gap-2 text-xs font-semibold uppercase tracking-normal text-[var(--muted)]">
+    <Label htmlFor={fieldId}>
       {label}
-      <textarea
-        className={`min-h-24 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm normal-case text-[var(--foreground)] outline-none transition focus:border-[var(--foreground)] ${className}`}
-        {...props}
-      />
-    </label>
+      <TextareaPrimitive id={fieldId} className={cn("normal-case", className)} {...props} />
+    </Label>
   );
 }
 
@@ -36,16 +53,60 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
 };
 
-export function Select({ label, className = "", children, ...props }: SelectProps) {
+const emptySelectValue = "__empty__";
+
+function getOptionText(children: ReactNode): string {
+  if (typeof children === "string" || typeof children === "number") {
+    return String(children);
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(getOptionText).join("");
+  }
+
+  return "";
+}
+
+export function Select({ label, className, children, value, defaultValue, onChange, disabled, required }: SelectProps) {
+  const selectedValue = value === "" ? emptySelectValue : value?.toString();
+  const selectedDefaultValue = defaultValue === "" ? emptySelectValue : defaultValue?.toString();
+  const placeholder = required ? "Select an option" : "All";
+  const options = ChildrenToSelectItems(children);
+
   return (
-    <label className="grid gap-2 text-xs font-semibold uppercase tracking-normal text-[var(--muted)]">
+    <Label>
       {label}
-      <select
-        className={`min-h-10 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm normal-case text-[var(--foreground)] outline-none transition focus:border-[var(--foreground)] ${className}`}
-        {...props}
+      <SelectRoot
+        value={selectedValue}
+        defaultValue={selectedDefaultValue}
+        disabled={disabled}
+        onValueChange={(nextValue) => {
+          const mappedValue = nextValue === emptySelectValue ? "" : nextValue;
+          onChange?.({ target: { value: mappedValue } } as ChangeEvent<HTMLSelectElement>);
+        }}
       >
-        {children}
-      </select>
-    </label>
+        <SelectTrigger className={cn("normal-case", className)} aria-label={label}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>{options}</SelectContent>
+      </SelectRoot>
+    </Label>
   );
+}
+
+function ChildrenToSelectItems(children: ReactNode) {
+  return Children.map(children, (child) => {
+    if (!isValidElement<{ value?: string | number; children?: ReactNode; disabled?: boolean }>(child)) {
+      return child;
+    }
+
+    const rawValue = child.props.value?.toString() ?? getOptionText(child.props.children);
+    const itemValue = rawValue === "" ? emptySelectValue : rawValue;
+
+    return (
+      <SelectItem key={itemValue} value={itemValue} disabled={child.props.disabled}>
+        {child.props.children}
+      </SelectItem>
+    );
+  });
 }
